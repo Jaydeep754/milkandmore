@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Delivery Dashboard</h2>
+    
+    <!-- Delivery Boy Stats -->
+    {% if delivery_boy %}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Deliveries</h5>
+                    <h2>{{ delivery_boy.total_deliveries }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Vehicle Number</h5>
+                    <h2>{{ delivery_boy.vehicle_number }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Status</h5>
+                    <h2>{% if delivery_boy.is_available %}Available{% else %}On Delivery{% endif %}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Current Assigned Orders -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h5>Current Assigned Orders</h5>
+        </div>
+        <div class="card-body">
+            {% if assigned_orders %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Address</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in assigned_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.get_full_name|default:order.user.username }}</td>
+                                <td>{{ order.delivery_address|truncatechars:30 }}</td>
+                                <td>₹{{ order.total_amount }}</td>
+                                <td>
+                                    <span class="badge bg-{% if order.status == 'out_for_delivery' %}info{% else %}secondary{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary view-order" data-order-id="{{ order.id }}">
+                                        View Details
+                                    </button>
+                                    <button class="btn btn-sm btn-success update-status" data-order-id="{{ order.id }}">
+                                        Update Status
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No assigned orders.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Available Orders for Pickup -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5>Available Orders for Pickup</h5>
+        </div>
+        <div class="card-body">
+            {% if available_orders %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Address</th>
+                                <th>Amount</th>
+                                <th>Items</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in available_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.get_full_name|default:order.user.username }}</td>
+                                <td>{{ order.delivery_address|truncatechars:30 }}</td>
+                                <td>₹{{ order.total_amount }}</td>
+                                <td>{{ order.items.count }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success accept-order" data-order-id="{{ order.id }}">
+                                        Accept Delivery
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No available orders.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Delivery History -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5>Recent Deliveries</h5>
+        </div>
+        <div class="card-body">
+            {% if delivered_orders %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Delivery Time</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in delivered_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.get_full_name|default:order.user.username }}</td>
+                                <td>₹{{ order.total_amount }}</td>
+                                <td>{{ order.delivery_time }}</td>
+                                <td>{{ order.order_date|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No delivery history.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderModalBody">
+                Loading...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View order details
+    document.querySelectorAll('.view-order').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            
+            fetch(`/delivery/order/${orderId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = `
+                        <h6>Customer: ${data.customer_name}</h6>
+                        <p>Phone: ${data.customer_phone}</p>
+                        <p>Address: ${data.delivery_address}</p>
+                        <p>Delivery Time: ${data.delivery_time}</p>
+                        <h6 class="mt-3">Items:</h6>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.items.forEach(item => {
+                        html += `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>₹${item.price}</td>
+                                <td>₹${(item.quantity * item.price).toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th>₹${data.total}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    `;
+                    
+                    document.getElementById('orderModalBody').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('orderModal')).show();
+                });
+        });
+    });
+    
+    // Accept order
+    document.querySelectorAll('.accept-order').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            
+            if (confirm('Accept this order for delivery?')) {
+                fetch(`/delivery/accept/${orderId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to accept order.');
+                    }
+                });
+            }
+        });
+    });
+    
+    // Update status
+    document.querySelectorAll('.update-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            const newStatus = prompt('Enter new status (delivered, out_for_delivery):', 'delivered');
+            
+            if (newStatus) {
+                fetch(`/delivery/update/${orderId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        notes: 'Status updated by delivery partner'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to update status.');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

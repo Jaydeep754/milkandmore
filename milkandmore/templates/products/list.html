@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Our Products</h2>
+    
+    <!-- Category Filter -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'product_list' %}" class="btn btn-outline-primary {% if not current_category %}active{% endif %}">All</a>
+                {% for category in categories %}
+                <a href="{% url 'product_list' %}?category={{ category.slug }}" 
+                   class="btn btn-outline-primary {% if current_category.id == category.id %}active{% endif %}">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card h-100">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <span class="text-muted">No Image</span>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text text-muted">{{ product.description|truncatewords:10 }}</p>
+                    <p class="card-text"><strong>₹{{ product.price }}</strong></p>
+                    {% if product.stock > 0 %}
+                        <span class="badge bg-success mb-2">In Stock</span>
+                    {% else %}
+                        <span class="badge bg-danger mb-2">Out of Stock</span>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                    {% if user.is_authenticated and product.stock > 0 %}
+                    <button class="btn btn-success btn-sm add-to-cart" data-product-id="{{ product.id }}">
+                        Add to Cart
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p>No products found.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            
+            fetch('/products/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Product added to cart!');
+                    // Update cart count if you have it in the navbar
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

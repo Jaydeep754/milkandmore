@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4">Welcome to Milk&More</h1>
+                <p class="lead">Fresh dairy products delivered to your doorstep</p>
+                <a href="{% url 'product_list' %}" class="btn btn-light btn-lg">Shop Now</a>
+            </div>
+            <div class="col-lg-6">
+                <img src="{% static 'images/hero-dairy.jpg' %}" alt="Fresh Dairy Products" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Our Categories</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 category-card text-center">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" class="card-img-top" alt="{{ category.name }}" style="height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light py-4">
+                            <i class="fas fa-box fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ category.name }}</h5>
+                        <a href="{% url 'product_list' %}?category={{ category.slug }}" class="btn btn-outline-primary btn-sm">View</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="featured-products py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">Featured Products</h2>
+        
+        <div class="row">
+            {% for product in featured_products %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 product-card">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description|truncatewords:10 }}</p>
+                        <p class="card-text"><strong>₹{{ product.price }}</strong></p>
+                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary btn-sm">View Details</a>
+                        {% if user.is_authenticated %}
+                            <button class="btn btn-success btn-sm add-to-cart" data-product-id="{{ product.id }}">Add to Cart</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p>No products available. Add some in admin panel.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            fetch('/products/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({product_id: productId, quantity: 1})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) alert('Added to cart!');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

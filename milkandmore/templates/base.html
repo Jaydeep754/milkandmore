@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milk&More - Fresh Dairy Products</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        .navbar-brand img {
+            height: 50px;
+            margin-right: 10px;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: #2c3e50;
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #e67e22;
+        }
+        .cart-badge {
+            background-color: #e67e22;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .footer {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 40px 0 20px;
+            margin-top: 50px;
+        }
+        .footer a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer a:hover {
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="{% static 'images/logo.png' %}" alt="Milk&More" onerror="this.style.display='none'">
+                Milk&More
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'product_list' %}">
+                            <i class="fas fa-box"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-list"></i> Categories
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'product_list' %}?category=lassi">🥤 Lassi</a></li>
+                            <li><a class="dropdown-item" href="{% url 'product_list' %}?category=matho">🥛 Matho</a></li>
+                            <li><a class="dropdown-item" href="{% url 'product_list' %}?category=basundi">🍮 Basundi</a></li>
+                            <li><a class="dropdown-item" href="{% url 'product_list' %}?category=dairy-products">🧀 Dairy Products</a></li>
+                            <li><a class="dropdown-item" href="{% url 'product_list' %}?category=ice-cream">🍦 Ice-cream</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'cart' %}">
+                                <i class="fas fa-shopping-cart"></i> 
+                                Cart
+                                <span class="cart-badge" id="cart-count">{{ cart_count|default:0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if user.is_customer %}
+                                    <li><a class="dropdown-item" href="{% url 'profile' %}">
+                                        <i class="fas fa-id-card"></i> Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'order_history' %}">
+                                        <i class="fas fa-history"></i> My Orders
+                                    </a></li>
+                                {% elif user.is_delivery_boy %}
+                                    <li><a class="dropdown-item" href="{% url 'delivery_dashboard' %}">
+                                        <i class="fas fa-truck"></i> Delivery Dashboard
+                                    </a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-primary text-white px-3" href="{% url 'register_choice' %}">
+                                <i class="fas fa-user-plus"></i> Register
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    {% block content %}
+    {% endblock %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5><i class="fas fa-seedling"></i> Milk&More</h5>
+                    <p>Your trusted partner for fresh dairy products delivered daily to your doorstep since 2024.</p>
+                    <div class="social-links">
+                        <a href="#" class="me-2"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp fa-lg"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="{% url 'product_list' %}">Products</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5>Categories</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'product_list' %}?category=lassi">🥤 Lassi</a></li>
+                        <li><a href="{% url 'product_list' %}?category=matho">🥛 Matho</a></li>
+                        <li><a href="{% url 'product_list' %}?category=basundi">🍮 Basundi</a></li>
+                        <li><a href="{% url 'product_list' %}?category=ice-cream">🍦 Ice-cream</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-phone"></i> +91 12345 67890</li>
+                        <li><i class="fas fa-envelope"></i> support@milkandmore.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Anand, Gujarat, India</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2024 Milk&More. All rights reserved. | Fresh Dairy, Happy Every Day!</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% load static %}
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

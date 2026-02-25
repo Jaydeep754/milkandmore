@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Choose Registration Type</h2>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-5 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-user fa-4x text-primary mb-3"></i>
+                    <h4>Register as Customer</h4>
+                    <p>Order fresh dairy products for home delivery</p>
+                    <a href="{% url 'register_customer' %}" class="btn btn-primary">Customer Registration</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-5 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-truck fa-4x text-success mb-3"></i>
+                    <h4>Register as Delivery Partner</h4>
+                    <p>Join our team and deliver happiness</p>
+                    <a href="{% url 'register_delivery' %}" class="btn btn-success">Delivery Partner Registration</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mt-3">
+        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+    </div>
+</div>
+{% endblock %}

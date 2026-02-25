@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import Product, Category
-from orders.models import Cart
+from orders.models import Cart, CartItem
 import json
 
 # ✅ ADD THIS HOME FUNCTION FIRST
@@ -14,7 +14,6 @@ def home(request):
     # Get cart count if user is logged in
     cart_count = 0
     if request.user.is_authenticated:
-        from orders.models import Cart
         cart, created = Cart.objects.get_or_create(user=request.user, is_active=True)
         cart_count = cart.items.count()
     
